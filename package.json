@@ -22,7 +22,8 @@
     "lint": "eslint src --max-warnings=0",
     "typecheck": "tsc --project tsconfig.json --noEmit",
   "predeploy": "npm run build",
-  "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "homepage": "https://luudvan94.github.io/cappanion/"
   },
   "dependencies": {
     "react": "^18.3.1",
