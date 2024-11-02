@@ -111,7 +111,7 @@ export const ScreensShowcase = () => {
               onMouseLeave={handleMouseLeave}
             >
               <img
-                src={`src/assets/img/${screen.imgFileName}`}
+                src={`/${screen.imgFileName}`}
                 alt={screen.title}
                 className="scale-120 h-auto w-full"
               />
@@ -127,7 +127,7 @@ export const ScreensShowcase = () => {
         >
           <div className="shrink-0">
             <img
-              src={`src/assets/img/${overlayImage.screen.imgFileName}`}
+              src={`/${overlayImage.screen.imgFileName}`}
               alt={overlayImage.screen.title}
               className="max-h-96 w-auto scale-150"
             />
