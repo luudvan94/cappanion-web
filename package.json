@@ -27,7 +27,8 @@
   },
   "dependencies": {
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "typeit": "^8.8.7"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
