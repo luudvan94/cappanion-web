@@ -51,90 +51,123 @@ export const screensShowcase: ScreenShowcase[] = [
   }
 ]
 
-import React, { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export const ScreensShowcase = () => {
-  const [overlayImage, setOverlayImage] = useState<{
-    screen: ScreenShowcase
-    top: number
-    left: number
-  } | null>(null)
-  const hoverTimeout = useRef<NodeJS.Timeout | null>(null)
+  const overlayImage = useRef<ScreenShowcase | null>(null)
+  const [isHovered, setIsHovered] = useState(false)
+  const mousePosition = useRef({ x: 0, y: 0 })
+  const [activeScreenId, setActiveScreenId] = useState<string | null>(null)
+  const [isSingleColumn, setIsSingleColumn] = useState(false)
 
-  const handleMouseEnter = (
-    screen: ScreenShowcase,
-    event: React.MouseEvent<HTMLDivElement>
-  ) => {
-    if (hoverTimeout.current) {
-      clearTimeout(hoverTimeout.current)
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSingleColumn(window.innerWidth < 640) // Tailwind's 'sm' breakpoint
     }
-    console.log('hovering')
-    const rect = event.currentTarget.getBoundingClientRect()
-    hoverTimeout.current = setTimeout(() => {
-      console.log('setting overlay image')
-      setOverlayImage({
-        screen,
-        top: rect.top,
-        left: rect.left
-      })
-    }, 500) // 500ms delay
-  }
 
-  const handleMouseLeave = () => {
-    if (hoverTimeout.current) {
-      clearTimeout(hoverTimeout.current)
-      hoverTimeout.current = null
+    window.addEventListener('resize', handleResize)
+    handleResize() // Initial check
+
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const handleMouseMove = (event: React.MouseEvent) => {
+    if (isSingleColumn) return // Disable hover logic for single column
+
+    const { clientX, clientY } = event
+    const distance = Math.sqrt(
+      Math.pow(clientX - mousePosition.current.x, 2) +
+        Math.pow(clientY - mousePosition.current.y, 2)
+    )
+
+    if (distance > 50) {
+      console.log('leaving overlay')
+      setIsHovered(false)
     }
-    setOverlayImage(null)
   }
 
   return (
-    <div className="flex h-full flex-col bg-black">
+    <div className="flex h-full flex-col bg-black animate-in fade-in-75">
       <div
         className="flex h-full flex-col items-center gap-12 overflow-y-auto py-20"
         style={{ scrollPaddingTop: '1rem', scrollPaddingBottom: '1rem' }}
       >
         <div>
-          <h1 className="text-center text-2xl font-bold text-white">
+          <h1 className="prose text-center text-2xl font-bold text-white">
             Cappanion
           </h1>
           <p className="mb-4 text-center text-lg text-gray-300">
             Your personal AI companion
           </p>
         </div>
-        <div className="no-scrollbar grid grow grid-cols-3 gap-36">
+        <div className="no-scrollbar grid grow grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 md:gap-12 lg:gap-36">
           {screensShowcase.map((screen) => (
             <div
               key={screen.id}
-              className="screen w-48 text-center"
-              onMouseEnter={(e) => handleMouseEnter(screen, e)}
-              onMouseLeave={handleMouseLeave}
+              className="screen bg-red relative mx-auto w-full max-w-xs text-center"
             >
               <img
+                onClick={() => {
+                  setActiveScreenId(
+                    screen.id === activeScreenId ? null : screen.id
+                  )
+                }}
                 src={`/${screen.imgFileName}`}
                 alt={screen.title}
                 className="scale-120 h-auto w-full"
               />
+              {!isSingleColumn && (
+                <div
+                  onMouseOver={(e) => {
+                    if (isHovered) return
+
+                    mousePosition.current = {
+                      x: e.clientX,
+                      y: e.clientY
+                    }
+                    setIsHovered(true)
+                    overlayImage.current = screen
+                  }}
+                  onMouseLeave={() => {
+                    if (!isHovered) {
+                      overlayImage.current = null
+                    }
+                  }}
+                  className="absolute inset-0 z-50 m-auto"
+                  style={{
+                    width: '25%',
+                    height: '25%',
+                    backgroundColor: 'transparent'
+                  }}
+                ></div>
+              )}
               <p className="mt-6 text-white">{screen.title}</p>
+              {activeScreenId === screen.id && isSingleColumn && (
+                <p className="mt-2 text-white">{screen.desc}</p>
+              )}
             </div>
           ))}
         </div>
       </div>
-      {overlayImage && (
+      {!isSingleColumn && isHovered && (
         <div
-          className="duration-[2000ms] fixed inset-0 z-50 flex items-center justify-center gap-16 bg-black/90 transition-opacity"
-          onClick={() => setOverlayImage(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center gap-4 bg-black/90 animate-in fade-in md:gap-16"
+          onMouseMove={handleMouseMove}
         >
           <div className="shrink-0">
             <img
-              src={`/${overlayImage.screen.imgFileName}`}
-              alt={overlayImage.screen.title}
-              className="max-h-96 w-auto scale-150"
+              src={`/${overlayImage.current?.imgFileName}`}
+              alt={overlayImage.current?.title}
+              className="max-h-48 w-auto scale-150 md:max-h-96"
             />
           </div>
           <div className="text-left text-white">
-            <h2 className="text-2xl font-bold">{overlayImage.screen.title}</h2>
-            <p className="mt-2 text-lg">{overlayImage.screen.desc}</p>
+            <h2 className="text-xl font-bold md:text-2xl">
+              {overlayImage.current?.title}
+            </h2>
+            <p className="mt-2 text-base md:text-lg">
+              {overlayImage.current?.desc}
+            </p>
           </div>
         </div>
       )}
